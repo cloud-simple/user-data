@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+echo "### === log: setup START"
+sudo -u ubuntu  -i << '_EOF_EXTERNAL'
+
+cat > ~/user-data.sh << '_EOF_EXTERNAL_INTERNAL'
+#!/usr/bin/env bash
+
 echo "### === log: tomcat server: setup START"
 
 port_to_listen=59876
@@ -261,3 +267,9 @@ chmod 600 /opt/tomcat/ccpd-config.yml
 systemctl start tomcat
 
 echo "### === log: CCDP: deploy DONE"
+_EOF_EXTERNAL_INTERNAL
+
+chmod +x ~/user-data.sh
+_EOF_EXTERNAL
+
+echo "### === log: setup DONE"
