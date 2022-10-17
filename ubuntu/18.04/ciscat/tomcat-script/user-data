@@ -164,7 +164,7 @@ _EOF
 
 echo "### === log: tomcat server: config permissions"
 
-mkdir /opt/tomcat/legacy/{source,processed,error}
+mkdir -p /opt/tomcat/legacy/{source,processed,error}
 
 chgrp -R tomcat /opt/tomcat/
 
@@ -211,8 +211,6 @@ echo "### === log: tomcat server: setup DONE"
 
 echo "### === log: CCDP: deploy START"
 
-deploy_flag="true"
-
 ### get CCPD.war
 # In case this script is run on remote server connected via SSH.
 #   E.g. this file can be copied to 'ubuntu' user home directory
@@ -235,19 +233,32 @@ deploy_flag="true"
 # If no one from the above attempts does work, just stop here
 #   without CCPD deployment (set 'deploy_flag' to 'false')
 
+deploy_flag="true"
 
-apt-get install git-lfs -y
+ssh-keyscan 172.31.8.104 >> ~/.ssh/known_hosts
+ssh -o ConnectTimeout=2 -q ubuntu@172.31.8.104 'exit'
+if [ $? -eq 0 ]; then
+  scp ubuntu@172.31.8.104:~/download/CCPD.war /tmp
+  scp ubuntu@172.31.8.104:~/download/ccpd-config.yml /tmp
+fi
 
-git config --global user.email "cloud-simple@tilson.biz"
-git config --global user.name "cloud-simple"
-git lfs install
+test -f /tmp/CCPD.war || deploy_flag="false"
+test -f /tmp/ccpd-config.yml || deploy_flag="false"
 
-ssh-keyscan github.com >> ~/.ssh/known_hosts
-rm -fr /tmp/storage
-git clone git@github.com:cloud-simple/storage.git /tmp/storage
+if [ "${deploy_flag}" == "false" ]; then
+  apt-get install git-lfs -y
 
-cp /tmp/storage/ciscat/CCPD.war /tmp
-cp /tmp/storage/ciscat/ccpd-config.yml /tmp
+  git config --global user.email "cloud-simple@tilson.biz"
+  git config --global user.name "cloud-simple"
+  git lfs install
+
+  ssh-keyscan github.com >> ~/.ssh/known_hosts
+  rm -fr /tmp/storage
+  git clone git@github.com:cloud-simple/storage.git /tmp/storage
+
+  cp /tmp/storage/ciscat/CCPD.war /tmp
+  cp /tmp/storage/ciscat/ccpd-config.yml /tmp
+fi
 
 test -f /tmp/CCPD.war || deploy_flag="false"
 test -f /tmp/ccpd-config.yml || deploy_flag="false"
